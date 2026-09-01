@@ -1,0 +1,112 @@
+[
+  {
+    "id": "sheng",
+    "name": "Kenyan Slang & Sheng",
+    "nameSw": "Misemo ya Sheng",
+    "description": "Trending street slang, Nairobi lingo, and timeless Kenyan sayings.",
+    "icon": "chatbubble_ellipses",
+    "color": "#E63946",
+    "isParty": false,
+    "isFamilyFriendly": true
+  },
+  {
+    "id": "food",
+    "name": "Kenyan Food & Delicacies",
+    "nameSw": "Vyakula vya Kenya",
+    "description": "From street mutura to Sunday feast pilau and chapati dondo.",
+    "icon": "restaurant",
+    "color": "#FB8500",
+    "isParty": false,
+    "isFamilyFriendly": true
+  },
+  {
+    "id": "places",
+    "name": "Mtaa & Places",
+    "nameSw": "Mitaa na Miji",
+    "description": "Iconic estates, Kenyan towns, highways, and holiday hotspots.",
+    "icon": "location",
+    "color": "#06D6A0",
+    "isParty": false,
+    "isFamilyFriendly": true
+  },
+  {
+    "id": "culture",
+    "name": "Kenyan Culture & Traditions",
+    "nameSw": "Utamaduni wa Kenya",
+    "description": "Ruracios, kitenge styles, chama meetings, and matatu lifestyle.",
+    "icon": "people",
+    "color": "#FFB703",
+    "isParty": false,
+    "isFamilyFriendly": true
+  },
+  {
+    "id": "campus",
+    "name": "Campus & Uni Life",
+    "nameSw": "Maisha ya Chuo",
+    "description": "HELB drama, CAT panics, hostel hacks, and campus crushes.",
+    "icon": "school",
+    "color": "#219EBC",
+    "isParty": false,
+    "isFamilyFriendly": true
+  },
+  {
+    "id": "football",
+    "name": "Football & Sports",
+    "nameSw": "Soka na Michezo",
+    "description": "KPL derbies, Harambee Stars glory, marathon kings, and pitch banter.",
+    "icon": "football",
+    "color": "#118AB2",
+    "isParty": false,
+    "isFamilyFriendly": true
+  },
+  {
+    "id": "music",
+    "name": "Kenyan Music & Vibes",
+    "nameSw": "Muziki wa Kenya",
+    "description": "Gengetone bangers, mugithi nights, Arbantone waves, and legends.",
+    "icon": "musical_notes",
+    "color": "#8338EC",
+    "isParty": false,
+    "isFamilyFriendly": true
+  },
+  {
+    "id": "daily_life",
+    "name": "Everyday Kenyan Life",
+    "nameSw": "Maisha ya Kila Siku",
+    "description": "M-Pesa errands, KPLC blackouts, bodaboda rides, and Nairobi survival.",
+    "icon": "flash",
+    "color": "#3A86FF",
+    "isParty": false,
+    "isFamilyFriendly": true
+  },
+  {
+    "id": "relationships",
+    "name": "Dating & Situationships",
+    "nameSw": "Uhusiano na Mapenzi",
+    "description": "Red flags, first date dramas, character development, and ghosting.",
+    "icon": "heart",
+    "color": "#FF006E",
+    "isParty": false,
+    "isFamilyFriendly": true
+  },
+  {
+    "id": "sherehe",
+    "name": "Sherehe & Party Vibes",
+    "nameSw": "Sherehe na Vibes",
+    "description": "Weekend turn-up, DJ mixes, hangover regrets, and club shenanigans.",
+    "icon": "beer",
+    "color": "#9B5DE5",
+    "isParty": true,
+    "isFamilyFriendly": false
+  },
+  {
+    "id": "international",
+    "name": "Global Classics & Memes",
+    "nameSw": "Kimataifa na Memes",
+    "description": "Hollywood movies, viral internet memes, and worldwide icons.",
+    "icon": "globe",
+    "color": "#4D908E",
+    "isParty": false,
+    "isFamilyFriendly": true
+  }
+]

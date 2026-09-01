@@ -1,0 +1,50 @@
+name: cheza_game
+description: "CHEZA! - The Ultimate Kenyan Party & Charades Game for Android and iOS."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: '>=0.18.0 <1.0.0'
+
+  # State Management & DI
+  flutter_riverpod: ^2.5.1
+
+  # Declarative Routing
+  go_router: ^14.2.0
+
+  # Local Persistence
+  shared_preferences: ^2.2.3
+
+  # Fonts & Animations
+  google_fonts: ^6.2.1
+  flutter_animate: ^4.5.0
+
+  # Social Sharing & Native Features
+  share_plus: '>=9.0.0 <11.0.0'
+  uuid: '>=4.0.0 <5.0.0'
+  sensors_plus: '>=4.0.0 <7.0.0'
+
+  # Device Preview & UI Simulation
+  device_preview: ^1.2.0
+
+  # Icons & UI helpers
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/data/

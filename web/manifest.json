@@ -1,0 +1,11 @@
+{
+  "name": "CHEZA! Kenyan Charades",
+  "short_name": "CHEZA!",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0D0F14",
+  "theme_color": "#FFC107",
+  "description": "The Ultimate Kenyan Party & Charades Game for Android and iOS.",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false
+}
