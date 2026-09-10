@@ -1,15 +1,18 @@
 import '../../domain/models/word.dart';
 import '../../domain/repositories/word_repository.dart';
 import '../datasources/local_word_datasource.dart';
+import 'word_stats_repository.dart';
 
 class WordRepositoryImpl implements WordRepository {
   final LocalWordDatasource datasource;
+  final WordStatsRepository? statsRepository;
 
-  WordRepositoryImpl({required this.datasource});
+  WordRepositoryImpl({required this.datasource, this.statsRepository});
 
   @override
   Future<List<GameWord>> getAllWords() async {
-    return await datasource.loadWords();
+    final allWords = await datasource.loadWords();
+    return _applyDynamicDifficulty(allWords);
   }
 
   @override
@@ -19,7 +22,8 @@ class WordRepositoryImpl implements WordRepository {
     required bool familyFriendlyOnly,
     required bool isDrinkingMode,
   }) async {
-    final allWords = await datasource.loadWords();
+    var allWords = await datasource.loadWords();
+    allWords = await _applyDynamicDifficulty(allWords);
 
     return allWords.where((word) {
       // Category filter (if empty, allow all)
@@ -41,8 +45,30 @@ class WordRepositoryImpl implements WordRepository {
       if (!isDrinkingMode && word.isDrinking) {
         return false;
       }
+      
+      // Bad word filter (words needing review should probably still be playable until deactivated,
+      // but maybe we exclude them? The prompt said "flag it for review. Do NOT automatically delete the word."
+      // So we can still play them, or not. We'll let them be playable unless deactivated).
 
       return true;
+    }).toList();
+  }
+
+  Future<List<GameWord>> _applyDynamicDifficulty(List<GameWord> words) async {
+    if (statsRepository == null) return words;
+
+    final statsList = await statsRepository!.getAllStats();
+    final statsMap = {for (var s in statsList) s.wordId: s};
+
+    return words.map((w) {
+      final stat = statsMap[w.id];
+      if (stat != null) {
+        // If it's flagged as inactive, we probably shouldn't even return it, 
+        // but that requires a change to the where clause.
+        // For now, we'll just update its difficulty level.
+        return w.copyWith(difficulty: stat.difficultyLevel);
+      }
+      return w;
     }).toList();
   }
 

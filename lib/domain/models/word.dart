@@ -54,4 +54,32 @@ class GameWord {
         'isDrinking': isDrinking,
         'tags': tags,
       };
+
+  GameWord copyWith({
+    String? id,
+    String? word,
+    String? categoryId,
+    String? difficulty,
+    String? language,
+    List<String>? aliases,
+    String? hints,
+    String? hintSw,
+    bool? familyFriendly,
+    bool? isDrinking,
+    List<String>? tags,
+  }) {
+    return GameWord(
+      id: id ?? this.id,
+      word: word ?? this.word,
+      categoryId: categoryId ?? this.categoryId,
+      difficulty: difficulty ?? this.difficulty,
+      language: language ?? this.language,
+      aliases: aliases ?? this.aliases,
+      hints: hints ?? this.hints,
+      hintSw: hintSw ?? this.hintSw,
+      familyFriendly: familyFriendly ?? this.familyFriendly,
+      isDrinking: isDrinking ?? this.isDrinking,
+      tags: tags ?? this.tags,
+    );
+  }
 }

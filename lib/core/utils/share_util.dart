@@ -1,6 +1,12 @@
 import 'package:share_plus/share_plus.dart';
 
 class ShareUtil {
+  static Future<void> shareMatchResult(String text) async {
+    try {
+      await Share.share(text, subject: 'CHEZA! Game Results');
+    } catch (_) {}
+  }
+
   static Future<void> shareGameResult({
     required String winningTeam,
     required int winningScore,

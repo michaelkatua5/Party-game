@@ -11,6 +11,7 @@ import '../../data/repositories/stats_repository_impl.dart';
 import '../../data/repositories/leaderboard_repository_impl.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/repositories/word_repository.dart';
+import '../../data/repositories/word_stats_repository.dart';
 import '../../domain/repositories/category_repository.dart';
 import '../../domain/repositories/settings_repository.dart';
 import '../../domain/repositories/stats_repository.dart';
@@ -36,10 +37,10 @@ final analyticsServiceProvider = Provider<AnalyticsService>((ref) {
 final localWordDatasourceProvider = Provider<LocalWordDatasource>((ref) {
   return LocalWordDatasource();
 });
-
 final wordRepositoryProvider = Provider<WordRepository>((ref) {
   final ds = ref.watch(localWordDatasourceProvider);
-  return WordRepositoryImpl(datasource: ds);
+  final statsRepo = ref.watch(wordStatsRepositoryProvider);
+  return WordRepositoryImpl(datasource: ds, statsRepository: statsRepo);
 });
 
 final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {

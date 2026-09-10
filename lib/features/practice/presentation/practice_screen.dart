@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_typography.dart';
-import '../../../domain/models/word.dart';
-import '../../../shared/widgets/category_badge.dart';
-import '../../../shared/widgets/kenyan_button.dart';
-import '../../../core/providers/core_providers.dart';
+import '../../../shared/widgets/cheza_button.dart';
+import '../../../shared/widgets/cheza_game_card.dart';
+import '../../categories/providers/category_providers.dart';
 
 class PracticeScreen extends ConsumerStatefulWidget {
   const PracticeScreen({super.key});
@@ -16,123 +16,144 @@ class PracticeScreen extends ConsumerStatefulWidget {
 }
 
 class _PracticeScreenState extends ConsumerState<PracticeScreen> {
-  List<GameWord> _deck = [];
   int _currentIndex = 0;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadWords();
-  }
-
-  Future<void> _loadWords() async {
-    final wordRepo = ref.read(wordRepositoryProvider);
-    final words = await wordRepo.getAllWords();
-    final shuffled = List<GameWord>.from(words)..shuffle();
-    if (mounted) {
-      setState(() {
-        _deck = shuffled;
-        _isLoading = false;
-      });
-    }
-  }
-
-  void _nextCard() {
-    if (_deck.isNotEmpty) {
-      setState(() {
-        _currentIndex = (_currentIndex + 1) % _deck.length;
-      });
-    }
-  }
+  bool _showHint = false;
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    final currentWord = _deck.isNotEmpty ? _deck[_currentIndex] : null;
+    final wordsAsync = ref.watch(wordsProvider);
 
     return Scaffold(
+      backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
-        title: const Text('🎯 Solo Practice & Discovery'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+          onPressed: () => context.pop(),
+        ),
+        title: Text(
+          'SOLO PRACTICE',
+          style: AppTypography.h2.copyWith(letterSpacing: 1.2),
+        ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingL),
-          child: Column(
-            children: [
-              const Text(
-                'Explore Kenyan words, test your acting techniques, and learn Sheng slang meanings!',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textMuted, fontSize: 14),
-              ),
-              const SizedBox(height: 24),
+        child: wordsAsync.when(
+          data: (words) {
+            if (words.isEmpty) {
+              return const Center(
+                child: Text('No words available', style: TextStyle(color: Colors.white)),
+              );
+            }
 
-              // Word Card
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(AppDimensions.paddingL),
-                  decoration: BoxDecoration(
-                    color: AppColors.darkCard,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
-                    border: Border.all(color: AppColors.darkCardBorder, width: 2),
+            final currentWord = words[_currentIndex % words.length];
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingL,
+                vertical: AppDimensions.paddingM,
+              ),
+              child: Column(
+                children: [
+                  // Progress Pill
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.darkCard,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.darkCardBorder),
+                    ),
+                    child: Text(
+                      'CARD ${_currentIndex + 1} OF ${words.length}',
+                      style: AppTypography.micro.copyWith(color: AppColors.electricCyan),
+                    ),
                   ),
-                  child: currentWord == null
-                      ? const Center(child: Text('No words loaded'))
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CategoryBadge(
-                              label: currentWord.categoryId.toUpperCase(),
-                              color: AppColors.savannaGold,
+
+                  const Spacer(flex: 1),
+
+                  // Physical Game Card
+                  ChezaGameCard(
+                    word: currentWord,
+                    categoryName: currentWord.categoryId.toUpperCase(),
+                    categoryColor: AppColors.electricCyan,
+                    isPractice: true,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Optional Hint Reveal Box
+                  if (_showHint)
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.electricCyan.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.electricCyan.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Text('💡 ', style: TextStyle(fontSize: 16)),
+                          Expanded(
+                            child: Text(
+                              currentWord.hints ?? 'Act it out without making a sound!',
+                              style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.25),
                             ),
-                            const Spacer(),
-                            Text(
-                              currentWord.word,
-                              textAlign: TextAlign.center,
-                              style: AppTypography.gameWordCard,
-                            ),
-                            const SizedBox(height: 16),
-                            if (currentWord.hints.isNotEmpty)
-                              Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: AppColors.darkInput,
-                                  borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                                ),
-                                child: Text(
-                                  '💡 ${currentWord.hints}',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            const Spacer(),
-                            Text(
-                              'Card ${_currentIndex + 1} of ${_deck.length}',
-                              style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
-                            ),
-                          ],
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    TextButton.icon(
+                      icon: const Icon(Icons.lightbulb_outline, color: AppColors.savannaGold, size: 18),
+                      label: const Text('Show Acting Hint', style: TextStyle(color: AppColors.savannaGold)),
+                      onPressed: () => setState(() => _showHint = true),
+                    ),
+
+                  const Spacer(flex: 2),
+
+                  // Next Word Action
+                  Row(
+                    children: [
+                      if (_currentIndex > 0)
+                        Expanded(
+                          flex: 1,
+                          child: ChezaButton(
+                            text: 'PREV',
+                            variant: ChezaButtonVariant.secondary,
+                            onPressed: () {
+                              setState(() {
+                                _currentIndex--;
+                                _showHint = false;
+                              });
+                            },
+                          ),
                         ),
-                ),
+                      if (_currentIndex > 0) const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ChezaButton(
+                          text: 'NEXT WORD ➔',
+                          variant: ChezaButtonVariant.primary,
+                          onPressed: () {
+                            setState(() {
+                              _currentIndex++;
+                              _showHint = false;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ],
               ),
-
-              const SizedBox(height: 24),
-
-              KenyanButton(
-                text: 'NEXT CARD ➡️',
-                gradient: AppColors.primaryGradient,
-                onPressed: _nextCard,
-              ),
-              const SizedBox(height: 12),
-            ],
+            );
+          },
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: AppColors.savannaGold),
+          ),
+          error: (_, __) => const Center(
+            child: Text('Failed to load words', style: TextStyle(color: Colors.white)),
           ),
         ),
       ),

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../domain/models/game_settings.dart';
 import '../../settings/providers/settings_provider.dart';
 

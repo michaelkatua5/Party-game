@@ -5,6 +5,7 @@ class LeaderboardEntry {
   final int gamesWon;
   final double accuracy;
   final DateTime date;
+  final String? avatar;
 
   const LeaderboardEntry({
     required this.id,
@@ -13,7 +14,10 @@ class LeaderboardEntry {
     required this.gamesWon,
     required this.accuracy,
     required this.date,
+    this.avatar,
   });
+
+  String get playerName => teamOrPlayerName;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -22,6 +26,7 @@ class LeaderboardEntry {
         'gamesWon': gamesWon,
         'accuracy': accuracy,
         'date': date.toIso8601String(),
+        'avatar': avatar,
       };
 
   factory LeaderboardEntry.fromJson(Map<String, dynamic> json) => LeaderboardEntry(
@@ -33,6 +38,7 @@ class LeaderboardEntry {
         date: json['date'] != null
             ? DateTime.tryParse(json['date'] as String) ?? DateTime.now()
             : DateTime.now(),
+        avatar: json['avatar'] as String?,
       );
 }
 

@@ -50,7 +50,13 @@ class GameSession {
     required this.startedAt,
   });
 
-  Team get currentTeam => teams[currentTeamIndex % teams.length];
+  Team get currentTeam => teams.isNotEmpty
+      ? teams[currentTeamIndex % teams.length]
+      : const Team(id: 't1', name: 'Team Simba', colorHex: '#FB8500', players: []);
+
+  Team get nextTeam => teams.isNotEmpty
+      ? teams[(currentTeamIndex + 1) % teams.length]
+      : const Team(id: 't2', name: 'Team Chui', colorHex: '#06D6A0', players: []);
 
   GameWord? get currentWord {
     if (wordDeck.isEmpty || currentWordIndex >= wordDeck.length) return null;

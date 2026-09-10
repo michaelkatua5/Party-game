@@ -104,12 +104,11 @@ class KingsCard {
           id: id,
           rank: rank,
           suit: suit,
-          ruleTitle: 'WATERFALL',
-          ruleDescription:
-              'Start drinking at the same time as the person to your left. Nobody stops until the person before them stops!',
+          ruleTitle: 'MEDUSA',
+          ruleDescription: 'You are now Medusa! Anyone who makes eye contact with you must take a shot. You stay Medusa until the next Ace is drawn.',
           familyRuleDescription:
-              'Start clapping or humming at the same time as the person to your left. Keep going in a continuous wave!',
-          iconEmoji: '🌊',
+              'You are now Medusa! Anyone who makes eye contact with you must freeze for 5 seconds. You stay Medusa until the next Ace is drawn.',
+          iconEmoji: '🐍',
         );
       case CardRank.two:
         return KingsCard(
@@ -117,7 +116,7 @@ class KingsCard {
           rank: rank,
           suit: suit,
           ruleTitle: 'YOU',
-          ruleDescription: 'Pick someone else in the room to take a sip / penalty.',
+          ruleDescription: 'Choose someone to drink.',
           familyRuleDescription: 'Pick someone to do a silly dare or 10 jumping jacks.',
           iconEmoji: '👉',
         );
@@ -127,7 +126,7 @@ class KingsCard {
           rank: rank,
           suit: suit,
           ruleTitle: 'ME',
-          ruleDescription: 'You take a drink / sip yourself!',
+          ruleDescription: 'You drink.',
           familyRuleDescription: 'You do a silly dance or sing a Kenyan song chorus!',
           iconEmoji: '🙋🏾‍♂️',
         );
@@ -137,7 +136,7 @@ class KingsCard {
           rank: rank,
           suit: suit,
           ruleTitle: 'FLOOR',
-          ruleDescription: 'Everyone must quickly touch the floor. Last person to touch the floor drinks!',
+          ruleDescription: 'The last person to touch the floor drinks.',
           familyRuleDescription: 'Everyone touch the floor! Last person to touch does 5 pushups.',
           iconEmoji: '👇',
         );
@@ -147,7 +146,7 @@ class KingsCard {
           rank: rank,
           suit: suit,
           ruleTitle: 'GUYS',
-          ruleDescription: 'All guys in the party take a drink!',
+          ruleDescription: 'Guys drink.',
           familyRuleDescription: 'All guys in the party must flex and strike a superhero pose!',
           iconEmoji: '👨‍👦‍👦',
         );
@@ -157,7 +156,7 @@ class KingsCard {
           rank: rank,
           suit: suit,
           ruleTitle: 'CHICKS',
-          ruleDescription: 'All ladies in the party take a drink!',
+          ruleDescription: 'Girls drink.',
           familyRuleDescription: 'All ladies in the party do a celebratory victory twirl!',
           iconEmoji: '👯‍♀️',
         );
@@ -167,7 +166,7 @@ class KingsCard {
           rank: rank,
           suit: suit,
           ruleTitle: 'HEAVEN',
-          ruleDescription: 'Raise your hands into the air! Last person to point up to heaven drinks.',
+          ruleDescription: 'Raise your hand to heaven. The last person to do so drinks.',
           familyRuleDescription: 'Hands in the air! Last person to raise both hands gives a high-five to everyone.',
           iconEmoji: '🙌',
         );
@@ -177,7 +176,7 @@ class KingsCard {
           rank: rank,
           suit: suit,
           ruleTitle: 'MATE',
-          ruleDescription: 'Choose a drinking mate. Whenever you have to drink for the rest of the game, your mate must drink too!',
+          ruleDescription: 'Choose someone to be your mate. Any time you drink, they drink.',
           familyRuleDescription: 'Choose a bestie! Whenever you have to do a challenge, your partner does it with you.',
           iconEmoji: '🤝',
         );
@@ -187,7 +186,7 @@ class KingsCard {
           rank: rank,
           suit: suit,
           ruleTitle: 'RHYME',
-          ruleDescription: 'Say a word. Going clockwise, each player must say a rhyming word. First player to hesitate or repeat drinks!',
+          ruleDescription: 'Say a word. The person to your right says a word that rhymes. The first person to fail drinks.',
           familyRuleDescription: 'Say a word. Everyone takes turns saying a rhyming word. First to get stuck loses a point!',
           iconEmoji: '🎤',
         );
@@ -197,7 +196,7 @@ class KingsCard {
           rank: rank,
           suit: suit,
           ruleTitle: 'CATEGORIES',
-          ruleDescription: 'Pick a category (e.g. Kenyan Foods, Matatu Routes). Going clockwise, each player names an item. First to fail drinks!',
+          ruleDescription: 'Choose a category of things. The person to your right names something in that category. The first person to fail drinks.',
           familyRuleDescription: 'Pick a category (e.g. African Animals, Nairobi Mtaas). Name items without repeating!',
           iconEmoji: '📚',
         );
@@ -207,7 +206,7 @@ class KingsCard {
           rank: rank,
           suit: suit,
           ruleTitle: 'NEVER HAVE I EVER',
-          ruleDescription: 'Everyone puts up 3 fingers. Take turns saying something you\'ve never done. Anyone who has done it puts a finger down. First with 0 fingers drinks!',
+          ruleDescription: 'Play never have I ever.',
           familyRuleDescription: 'Play Never Have I Ever with 3 fingers! First to lose all fingers does a funny dare.',
           iconEmoji: '🙈',
         );
@@ -216,10 +215,10 @@ class KingsCard {
           id: id,
           rank: rank,
           suit: suit,
-          ruleTitle: 'QUESTIONS',
-          ruleDescription: 'Ask someone a question without answering. They must immediately ask someone else a question. First to answer or hesitate drinks!',
-          familyRuleDescription: 'Rapid fire question chain! You cannot answer, only ask a new question.',
-          iconEmoji: '❓',
+          ruleTitle: 'QUESTION MASTER',
+          ruleDescription: 'You are the Question Master! Ask anyone questions. If they answer, they take a shot. This lasts until the next Queen is drawn. To avoid drinking, they must ignore you.',
+          familyRuleDescription: 'You are the Question Master! If you ask a question and someone answers, they lose a point. This lasts until the next Queen is drawn.',
+          iconEmoji: '🧐',
         );
       case CardRank.king:
         return KingsCard(
@@ -227,7 +226,7 @@ class KingsCard {
           rank: rank,
           suit: suit,
           ruleTitle: 'KING\'S CUP',
-          ruleDescription: 'Make a new party rule that everyone must follow! Pour some of your drink into the center King\'s Cup. (Whoever draws the 4th King drinks the entire cup!)',
+          ruleDescription: 'Set a rule and pour some of your drink into the King\'s cup in the center of the table. Whoever draws the final King must drink the entire King\'s cup.',
           familyRuleDescription: 'Create a hilarious rule that lasts all game! (e.g. Must speak in accents or clap before speaking).',
           iconEmoji: '👑',
         );

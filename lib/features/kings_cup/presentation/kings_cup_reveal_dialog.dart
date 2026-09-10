@@ -5,7 +5,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../domain/models/kings_card.dart';
 import '../../../domain/models/player.dart';
 import '../providers/kings_cup_controller.dart';
-import 'kings_cup_king_rule_dialog.dart';
+import '../../../core/providers/core_providers.dart';
+import '../../../core/services/audio_service.dart';
+import '../../../core/services/haptic_service.dart';
 
 class KingsCupRevealDialog extends ConsumerStatefulWidget {
   final KingsCard card;
@@ -72,6 +74,8 @@ class _KingsCupRevealDialogState extends ConsumerState<KingsCupRevealDialog> {
       } else {
         _timer?.cancel();
         setState(() => _countdownActive = false);
+        ref.read(audioServiceProvider).play(GameSound.buzzer);
+        ref.read(hapticServiceProvider).trigger(HapticType.heavy);
       }
     });
   }

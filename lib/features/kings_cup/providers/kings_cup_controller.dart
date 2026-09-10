@@ -76,6 +76,12 @@ class KingsCupControllerNotifier extends StateNotifier<KingsCupSession?> {
     state = state!.copyWith(activeRules: updatedRules);
   }
 
+  void removeActiveRule(String ruleText) {
+    if (state == null) return;
+    final updatedRules = List<String>.from(state!.activeRules)..remove(ruleText);
+    state = state!.copyWith(activeRules: updatedRules);
+  }
+
   void removeCustomRule(int index) {
     if (state == null || index < 0 || index >= state!.activeRules.length) return;
 

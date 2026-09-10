@@ -10,6 +10,9 @@ import '../../../domain/models/player.dart';
 import '../../../domain/models/team.dart';
 import '../../../domain/models/word.dart';
 import '../../../domain/repositories/leaderboard_repository.dart';
+import '../../../data/repositories/word_stats_repository.dart';
+import '../../../domain/models/word_stats.dart';
+import '../../../core/services/difficulty_service.dart';
 import 'timer_controller.dart';
 
 final gameControllerProvider =
@@ -19,6 +22,10 @@ final gameControllerProvider =
 
 class GameControllerNotifier extends StateNotifier<GameSession?> {
   final Ref ref;
+  DateTime? _wordStartTime;
+  
+  // Collect outcomes to batch write at the end of the round
+  final List<Map<String, dynamic>> _roundOutcomes = [];
 
   GameControllerNotifier(this.ref) : super(null);
 
@@ -27,11 +34,11 @@ class GameControllerNotifier extends StateNotifier<GameSession?> {
 
   Future<void> startQuickPlay() async {
     final wordRepo = ref.read(wordRepositoryProvider);
-    final settings = GameSettings(
+    const settings = GameSettings(
       roundDurationSeconds: 60,
       totalRounds: 3,
       difficulty: 'all',
-      selectedCategoryIds: const [],
+      selectedCategoryIds: [],
       familyFriendlyMode: true,
       drinkingMode: false,
     );
@@ -85,7 +92,7 @@ class GameControllerNotifier extends StateNotifier<GameSession?> {
       isDrinkingMode: settings.drinkingMode,
     );
 
-    final shuffled = List<GameWord>.from(words)..shuffle(Random());
+    final balancedDeck = _balanceDeck(words);
 
     state = GameSession(
       id: const Uuid().v4(),
@@ -93,16 +100,105 @@ class GameControllerNotifier extends StateNotifier<GameSession?> {
       status: GameStatus.countingDown,
       settings: settings,
       teams: teams,
-      wordDeck: shuffled,
+      wordDeck: balancedDeck,
       startedAt: DateTime.now(),
     );
 
     _logGameStart();
   }
 
+  List<GameWord> _balanceDeck(List<GameWord> words) {
+    if (words.isEmpty) return words;
+    final Map<String, List<GameWord>> byCategory = {};
+    for (final w in words) {
+      byCategory.putIfAbsent(w.categoryId, () => []).add(w);
+    }
+    final rnd = Random();
+    for (final list in byCategory.values) {
+      list.shuffle(rnd);
+    }
+
+    final List<GameWord> result = [];
+    bool hasMore = true;
+    int index = 0;
+    while (hasMore) {
+      hasMore = false;
+      for (final list in byCategory.values) {
+        if (index < list.length) {
+          result.add(list[index]);
+          hasMore = true;
+        }
+      }
+      index++;
+    }
+    return result.isEmpty ? (List<GameWord>.from(words)..shuffle(rnd)) : result;
+  }
+
+  Future<void> startTurnWithCategory(String categoryId) async {
+    final wordRepo = ref.read(wordRepositoryProvider);
+    final settings = state?.settings ?? const GameSettings();
+    final allWords = await wordRepo.getWordsForGame(
+      categoryIds: [categoryId],
+      difficulty: settings.difficulty,
+      familyFriendlyOnly: settings.familyFriendlyMode,
+      isDrinkingMode: settings.drinkingMode,
+    );
+
+    final usedWordIds = state != null ? {...state!.answeredWordIds, ...state!.passedWordIds} : <String>{};
+    var available = allWords.where((w) => !usedWordIds.contains(w.id)).toList();
+    if (available.isEmpty) {
+      available = List<GameWord>.from(allWords);
+    }
+    available.shuffle(Random());
+
+    final updatedSettings = settings.copyWith(
+      selectedCategoryIds: [categoryId],
+    );
+
+    if (state == null) {
+      final defaultTeams = [
+        const Team(
+          id: 'team_1',
+          name: 'Team Simba',
+          colorHex: '#FFB800',
+          players: [Player(id: 'p1', name: 'Player 1'), Player(id: 'p2', name: 'Player 2')],
+        ),
+        const Team(
+          id: 'team_2',
+          name: 'Team Chui',
+          colorHex: '#00F0FF',
+          players: [Player(id: 'p3', name: 'Player 3'), Player(id: 'p4', name: 'Player 4')],
+        ),
+      ];
+      state = GameSession(
+        id: const Uuid().v4(),
+        mode: GameMode.quickPlay,
+        status: GameStatus.countingDown,
+        settings: updatedSettings,
+        teams: defaultTeams,
+        wordDeck: available,
+        startedAt: DateTime.now(),
+      );
+      _logGameStart();
+    } else {
+      state = state!.copyWith(
+        settings: updatedSettings,
+        wordDeck: available,
+        currentWordIndex: 0,
+        status: GameStatus.countingDown,
+      );
+    }
+  }
+
+  void startNextRound() {
+    proceedToNextTurn();
+  }
+
   void beginActiveTurn() {
     if (state == null) return;
     state = state!.copyWith(status: GameStatus.playing);
+    _wordStartTime = DateTime.now();
+    _roundOutcomes.clear();
 
     ref.read(timerNotifierProvider.notifier).startTimer(
           durationSeconds: state!.settings.roundDurationSeconds,
@@ -116,12 +212,26 @@ class GameControllerNotifier extends StateNotifier<GameSession?> {
         );
   }
 
+  void _recordOutcome(String wordId, WordOutcome outcome) {
+    if (_wordStartTime != null) {
+      final timeSpentMs = DateTime.now().difference(_wordStartTime!).inMilliseconds;
+      _roundOutcomes.add({
+        'wordId': wordId,
+        'outcome': outcome,
+        'timeSpentMs': timeSpentMs,
+      });
+      _wordStartTime = DateTime.now(); // reset for next word
+    }
+  }
+
   void onCorrect() {
     if (state == null || state!.status != GameStatus.playing) return;
 
     final session = state!;
     final currentWord = session.currentWord;
     if (currentWord == null) return;
+
+    _recordOutcome(currentWord.id, WordOutcome.guessed);
 
     _audio.play(GameSound.correct);
     _haptic.trigger(HapticType.success);
@@ -163,6 +273,8 @@ class GameControllerNotifier extends StateNotifier<GameSession?> {
     final currentWord = session.currentWord;
     if (currentWord == null) return;
 
+    _recordOutcome(currentWord.id, WordOutcome.skipped);
+
     _audio.play(GameSound.pass);
     _haptic.trigger(HapticType.medium);
 
@@ -198,6 +310,8 @@ class GameControllerNotifier extends StateNotifier<GameSession?> {
     final currentWord = session.currentWord;
     if (currentWord == null) return;
 
+    _recordOutcome(currentWord.id, WordOutcome.failed);
+
     _audio.play(GameSound.wrong);
     _haptic.trigger(HapticType.error);
 
@@ -227,6 +341,15 @@ class GameControllerNotifier extends StateNotifier<GameSession?> {
     _haptic.trigger(HapticType.heavy);
 
     final session = state!;
+    
+    // Record the final word if time ran out while it was on screen
+    if (session.currentWord != null && session.status == GameStatus.playing) {
+      _recordOutcome(session.currentWord!.id, WordOutcome.failed);
+    }
+    
+    // Batch save stats
+    _saveRoundOutcomes();
+
     final nextTeamIndex = session.currentTeamIndex + 1;
     final isRoundComplete = (nextTeamIndex % session.teams.length) == 0;
     final nextRound = isRoundComplete ? session.currentRound + 1 : session.currentRound;
@@ -251,6 +374,37 @@ class GameControllerNotifier extends StateNotifier<GameSession?> {
         currentStreak: 0,
       );
     }
+  }
+  
+  Future<void> _saveRoundOutcomes() async {
+    if (_roundOutcomes.isEmpty) return;
+    final statsRepo = ref.read(wordStatsRepositoryProvider);
+    
+    // We must read the existing stats first, then update them.
+    final List<WordStats> updatedStats = [];
+    for (final outcomeData in _roundOutcomes) {
+      final wordId = outcomeData['wordId'] as String;
+      final outcome = outcomeData['outcome'] as WordOutcome;
+      final timeSpentMs = outcomeData['timeSpentMs'] as int;
+      
+      final current = await statsRepo.getStatsForWord(wordId);
+      final updated = DifficultyService.recordOutcome(current, outcome, timeSpentMs);
+      updatedStats.add(updated);
+    }
+    
+    await statsRepo.saveBatchStats(updatedStats);
+    _roundOutcomes.clear();
+  }
+
+  void selectTeamIndex(int index) {
+    if (state == null || state!.teams.isEmpty) return;
+    final validIndex = index % state!.teams.length;
+    state = state!.copyWith(currentTeamIndex: validIndex);
+  }
+
+  void setTeams(List<Team> newTeams) {
+    if (state == null || newTeams.isEmpty) return;
+    state = state!.copyWith(teams: newTeams);
   }
 
   void proceedToNextTurn() {

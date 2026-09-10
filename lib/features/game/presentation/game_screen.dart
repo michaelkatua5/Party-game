@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_typography.dart';
+import 'package:flutter/services.dart';
 import '../../../core/services/tilt_sensor_service.dart';
 import '../../../domain/models/game_session.dart';
 import '../../../domain/models/game_settings.dart';
+import '../../../shared/widgets/cheza_button.dart';
+import '../../../shared/widgets/cheza_game_card.dart';
+import '../../../shared/widgets/cheza_timer_ring.dart';
 import '../providers/game_controller.dart';
 import '../providers/timer_controller.dart';
 import 'countdown_overlay.dart';
@@ -28,6 +33,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     _startSensorIfApplicable();
   }
 
@@ -76,8 +85,56 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     });
   }
 
+  void _showPauseDialog() {
+    ref.read(timerNotifierProvider.notifier).pause();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF161B26),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Center(
+          child: Text(
+            'GAME PAUSED ⏸️',
+            style: AppTypography.h2.copyWith(fontWeight: FontWeight.w900),
+          ),
+        ),
+        content: const Text(
+          'Catch your breath! The timer is paused.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white70, fontSize: 14),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          ChezaButton(
+            text: 'RESUME GAME',
+            variant: ChezaButtonVariant.primary,
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              ref.read(timerNotifierProvider.notifier).resume();
+            },
+          ),
+          const SizedBox(height: 8),
+          ChezaButton(
+            text: 'QUIT TO HOME',
+            variant: ChezaButtonVariant.outline,
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              ref.read(gameControllerProvider.notifier).resetGame();
+              context.go('/home');
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     _tiltSensor.stopListening();
     super.dispose();
   }
@@ -89,16 +146,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     if (session == null) {
       return Scaffold(
-        backgroundColor: const Color(0xFF0F0B1E),
+        backgroundColor: AppColors.darkBackground,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text('No active game session', style: TextStyle(color: Colors.white)),
               const SizedBox(height: 16),
-              ElevatedButton(
+              ChezaButton(
+                text: 'Back to Home',
+                isFullWidth: false,
                 onPressed: () => context.go('/home'),
-                child: const Text('Back to Home'),
               ),
             ],
           ),
@@ -131,38 +189,51 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         context.go('/results');
       });
       return const Scaffold(
-        backgroundColor: Color(0xFF0F0B1E),
-        body: Center(child: CircularProgressIndicator()),
+        backgroundColor: AppColors.darkBackground,
+        body: Center(child: CircularProgressIndicator(color: AppColors.savannaGold)),
       );
     }
 
-    // Blueprint Screen 9: Fullscreen Green Correct Feedback Overlay
+    // Fullscreen Green Correct Feedback Overlay
     if (_showCorrectOverlay) {
       return Scaffold(
-        backgroundColor: const Color(0xFF064E3B), // Deep Green
+        backgroundColor: const Color(0xFF042F1A), // Deep Emerald
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(color: Color(0xFF22C55E), shape: BoxShape.circle),
-                child: const Icon(Icons.check, color: Colors.white, size: 72),
-              ),
+                padding: const EdgeInsets.all(26),
+                decoration: const BoxDecoration(
+                  color: AppColors.neonGreen,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_rounded, color: AppColors.textDark, size: 72),
+              ).animate().scale(duration: 250.ms, curve: Curves.easeOutBack),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'CORRECT!',
-                style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: 2),
+                style: AppTypography.displayLarge.copyWith(
+                  fontSize: 40,
+                  color: Colors.white,
+                  letterSpacing: 2,
+                ),
               ),
-              const SizedBox(height: 6),
-              const Text(
-                '+1 POINT',
-                style: TextStyle(color: AppColors.savannaGold, fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 18),
-              const Text(
-                'NEXT WORD GET READY...',
-                style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 1),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.savannaGold,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  '+1 POINT',
+                  style: TextStyle(
+                    color: AppColors.textDark,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
             ],
           ),
@@ -170,28 +241,35 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       );
     }
 
-    // Blueprint Screen 10: Fullscreen Red Pass Feedback Overlay
+    // Fullscreen Red Pass Feedback Overlay
     if (_showPassOverlay) {
       return Scaffold(
-        backgroundColor: const Color(0xFF7F1D1D), // Deep Red
+        backgroundColor: const Color(0xFF450A0A), // Deep Crimson
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(color: Color(0xFFEF4444), shape: BoxShape.circle),
+                padding: const EdgeInsets.all(26),
+                decoration: const BoxDecoration(
+                  color: AppColors.coralRed,
+                  shape: BoxShape.circle,
+                ),
                 child: const Icon(Icons.arrow_downward_rounded, color: Colors.white, size: 72),
-              ),
+              ).animate().scale(duration: 250.ms, curve: Curves.easeOutBack),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'PASS!',
-                style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: 2),
+                style: AppTypography.displayLarge.copyWith(
+                  fontSize: 40,
+                  color: Colors.white,
+                  letterSpacing: 2,
+                ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 8),
               const Text(
-                'NEXT WORD GET READY...',
-                style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 1),
+                'Next word coming up...',
+                style: TextStyle(color: Colors.white70, fontSize: 14),
               ),
             ],
           ),
@@ -202,222 +280,114 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final currentWord = session.currentWord;
     final currentTeam = session.currentTeam;
 
-    final formattedMinutes = (timerState.remainingSeconds ~/ 60).toString().padLeft(2, '0');
-    final formattedSeconds = (timerState.remainingSeconds % 60).toString().padLeft(2, '0');
-
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0B1E),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingL,
-            vertical: AppDimensions.paddingM,
-          ),
-          child: Column(
-            children: [
-              // Header Row: Score / Team Name / Digital Timer
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Score Indicator
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${currentTeam.score}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                        ),
+      backgroundColor: AppColors.darkBackground,
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onVerticalDragEnd: (details) {
+          if (currentWord == null || session.status != GameStatus.playing) return;
+          if (details.primaryVelocity! < 0) {
+            // Swipe Up
+            _triggerCorrect(currentWord.id);
+          } else if (details.primaryVelocity! > 0) {
+            // Swipe Down
+            _triggerPass(currentWord.id);
+          }
+        },
+        onTapUp: (details) {
+          if (currentWord == null || session.status != GameStatus.playing) return;
+          final height = MediaQuery.of(context).size.height;
+          if (details.globalPosition.dy < height / 2) {
+            _triggerCorrect(currentWord.id);
+          } else {
+            _triggerPass(currentWord.id);
+          }
+        },
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingL,
+              vertical: AppDimensions.paddingM,
+            ),
+            child: Column(
+              children: [
+                // Top Score, Team & Timer Ring Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Team & Score Pill
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.darkCard,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: AppColors.darkCardBorder),
                       ),
-                      const Text(
-                        'SCORE',
-                        style: TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-
-                  // Team & Timer Center Pill
-                  Column(
-                    children: [
-                      Text(
-                        currentTeam.name.toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E1736),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFF3B2F63)),
-                        ),
-                        child: Text(
-                          '$formattedMinutes:$formattedSeconds',
-                          style: TextStyle(
-                            color: timerState.remainingSeconds <= 10 ? AppColors.coralRed : Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            currentTeam.name.toUpperCase(),
+                            style: AppTypography.badge.copyWith(color: AppColors.savannaGold),
                           ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Text(
+                                '${currentTeam.score}',
+                                style: AppTypography.h1.copyWith(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'PTS',
+                                style: AppTypography.micro.copyWith(color: AppColors.textMuted),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Timer Ring Component
+                    ChezaTimerRing(
+                      remainingSeconds: timerState.remainingSeconds,
+                      totalSeconds: session.settings.roundDurationSeconds,
+                      size: 68,
+                    ),
+
+                    // Pause Button
+                    IconButton(
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.darkCard,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.darkCardBorder),
                         ),
+                        child: const Icon(Icons.pause_rounded, color: Colors.white, size: 20),
                       ),
-                    ],
-                  ),
-
-                  // Round number
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '${session.currentRound}',
-                        style: const TextStyle(
-                          color: AppColors.savannaGold,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const Text(
-                        'ROUND',
-                        style: TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-
-              const Spacer(flex: 1),
-
-              // Category Badge (e.g. KENYAN SLANG)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF8B5CF6).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  currentWord?.categoryId.toUpperCase() ?? 'KENYAN SLANG',
-                  style: const TextStyle(
-                    color: Color(0xFFC4B5FD),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // Main Word Card matching Blueprint Screen 8
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF261947),
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: const Color(0xFF8B5CF6), width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF8B5CF6).withOpacity(0.3),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
+                      onPressed: _showPauseDialog,
                     ),
                   ],
                 ),
-                alignment: Alignment.center,
-                child: Text(
-                  currentWord?.word.toUpperCase() ?? 'MANZE',
-                  textAlign: TextAlign.center,
-                  style: AppTypography.gameWordCard.copyWith(
-                    fontSize: 44,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5,
-                  ),
+
+                const SizedBox(height: 12),
+
+                // Physical 3D Active Game Card Component
+                Expanded(
+                  child: ChezaGameCard(
+                    word: currentWord,
+                    categoryName: currentWord?.categoryId.toUpperCase() ?? 'KENYAN VIBES',
+                    categoryColor: AppColors.savannaGold,
+                  ).animate().scale(duration: 200.ms, curve: Curves.easeOutCubic),
                 ),
-              ),
 
-              const Spacer(flex: 2),
-
-              // Controls matching Blueprint (Both Tilt labels and tap actions)
-              Row(
-                children: [
-                  // TILT UP / GOT IT (Correct)
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: currentWord != null ? () => _triggerCorrect(currentWord.id) : null,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF064E3B),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFF22C55E), width: 1.5),
-                        ),
-                        child: Column(
-                          children: [
-                            const Icon(Icons.arrow_upward_rounded, color: Color(0xFF22C55E), size: 24),
-                            const SizedBox(height: 4),
-                            Text(
-                              session.settings.controlMode == TiltControlMode.tap
-                                  ? '✓ GOT IT\n(+1 PT)'
-                                  : 'TILT UP\nCORRECT',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Color(0xFF22C55E),
-                                fontWeight: FontWeight.w900,
-                                fontSize: 13,
-                                height: 1.1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 14),
-
-                  // TILT DOWN / PASS
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: currentWord != null ? () => _triggerPass(currentWord.id) : null,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF7F1D1D),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFFEF4444), width: 1.5),
-                        ),
-                        child: Column(
-                          children: [
-                            const Icon(Icons.arrow_downward_rounded, color: Color(0xFFEF4444), size: 24),
-                            const SizedBox(height: 4),
-                            Text(
-                              session.settings.controlMode == TiltControlMode.tap
-                                  ? '↻ PASS\n(SKIP)'
-                                  : 'TILT DOWN\nPASS',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Color(0xFFEF4444),
-                                fontWeight: FontWeight.w900,
-                                fontSize: 13,
-                                height: 1.1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 10),
-            ],
+                const SizedBox(height: 12),
+              ],
+            ),
           ),
         ),
       ),

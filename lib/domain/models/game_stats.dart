@@ -15,6 +15,12 @@ class GameStats {
     this.favoriteCategory = 'sheng',
   });
 
+  int get gamesPlayed => totalGamesPlayed;
+  int get wins => totalGamesWon;
+  int get totalCorrectAnswers => totalWordsAnswered;
+  int get currentStreak => longestStreak;
+  int get bestStreak => longestStreak;
+
   double get winRate =>
       totalGamesPlayed > 0 ? (totalGamesWon / totalGamesPlayed) * 100 : 0.0;
 

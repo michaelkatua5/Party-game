@@ -62,8 +62,18 @@ class SettingsNotifier extends StateNotifier<GameSettings> {
     await updateSettings(updated);
   }
 
+  Future<void> toggleTheme() async {
+    final updated = state.copyWith(isDarkMode: !state.isDarkMode);
+    await updateSettings(updated);
+  }
+
   Future<void> setRounds(int rounds) async {
     final updated = state.copyWith(totalRounds: rounds);
+    await updateSettings(updated);
+  }
+
+  Future<void> setDifficulty(String diff) async {
+    final updated = state.copyWith(difficulty: diff);
     await updateSettings(updated);
   }
 }

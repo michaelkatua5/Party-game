@@ -7,12 +7,12 @@ import 'package:cheza_game/features/settings/presentation/settings_screen.dart';
 void main() {
   testWidgets('SettingsScreen renders sound, haptic, and mode toggles', (WidgetTester tester) async {
     await tester.pumpWidget(
-      ProviderScope(
+      const ProviderScope(
         child: MaterialApp(
-          localizationsDelegates: const [
+          localizationsDelegates: [
             AppLocalizations.delegate,
           ],
-          home: const SettingsScreen(),
+          home: SettingsScreen(),
         ),
       ),
     );
@@ -21,7 +21,7 @@ void main() {
 
     // Verify sections and toggles are visible
     expect(find.text('Sound Effects'), findsOneWidget);
-    expect(find.text('Haptic Vibration'), findsOneWidget);
+    expect(find.text('Haptic Vibrations'), findsOneWidget);
     expect(find.text('Family Friendly Mode'), findsOneWidget);
   });
 }

@@ -19,6 +19,7 @@ class GameSettings {
   final TiltControlMode controlMode;
   final TiltSensitivity sensitivity;
   final String language; // 'en' or 'sw'
+  final bool isDarkMode;
 
   const GameSettings({
     this.roundDurationSeconds = 60,
@@ -37,7 +38,10 @@ class GameSettings {
     this.controlMode = TiltControlMode.tilt,
     this.sensitivity = TiltSensitivity.medium,
     this.language = 'en',
+    this.isDarkMode = true,
   });
+
+  bool get familyFriendly => familyFriendlyMode;
 
   GameSettings copyWith({
     int? roundDurationSeconds,
@@ -50,12 +54,14 @@ class GameSettings {
     String? drinkingPenaltyType,
     String? finalKingPenalty,
     bool? familyFriendlyMode,
+    bool? familyFriendly,
     bool? soundEnabled,
     bool? hapticsEnabled,
     bool? showPassCount,
     TiltControlMode? controlMode,
     TiltSensitivity? sensitivity,
     String? language,
+    bool? isDarkMode,
   }) {
     return GameSettings(
       roundDurationSeconds: roundDurationSeconds ?? this.roundDurationSeconds,
@@ -67,13 +73,14 @@ class GameSettings {
       drinkingMode: drinkingMode ?? this.drinkingMode,
       drinkingPenaltyType: drinkingPenaltyType ?? this.drinkingPenaltyType,
       finalKingPenalty: finalKingPenalty ?? this.finalKingPenalty,
-      familyFriendlyMode: familyFriendlyMode ?? this.familyFriendlyMode,
+      familyFriendlyMode: familyFriendly ?? familyFriendlyMode ?? this.familyFriendlyMode,
       soundEnabled: soundEnabled ?? this.soundEnabled,
       hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
       showPassCount: showPassCount ?? this.showPassCount,
       controlMode: controlMode ?? this.controlMode,
       sensitivity: sensitivity ?? this.sensitivity,
       language: language ?? this.language,
+      isDarkMode: isDarkMode ?? this.isDarkMode,
     );
   }
 }

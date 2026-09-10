@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/services/tilt_sensor_service.dart';
@@ -28,6 +29,10 @@ class _CharadesCalibrationScreenState
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     _startRealCalibration();
   }
 
@@ -93,11 +98,21 @@ class _CharadesCalibrationScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F0B1E),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (didPop) {
+        if (didPop) {
+          SystemChrome.setPreferredOrientations([
+            DeviceOrientation.portraitUp,
+            DeviceOrientation.portraitDown,
+          ]);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0F0B1E),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -122,12 +137,12 @@ class _CharadesCalibrationScreenState
                 style: TextStyle(color: Colors.white60, fontSize: 14, height: 1.3),
               ),
 
-              const SizedBox(height: 36),
+              const SizedBox(height: 16),
 
               // Boy with phone on forehead illustration
               Container(
-                width: 180,
-                height: 180,
+                width: 130,
+                height: 130,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFF1E1736),
@@ -141,20 +156,20 @@ class _CharadesCalibrationScreenState
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
                         color: _sensorUnavailable ? AppColors.coralRed : const Color(0xFF8B5CF6),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         _sensorUnavailable ? 'TAP MODE' : '📱 SCREEN OUT',
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
+                        style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 6),
                     Text(
                       _sensorUnavailable ? '👆' : '👦🏾',
-                      style: const TextStyle(fontSize: 64),
+                      style: const TextStyle(fontSize: 42),
                     ),
                   ],
                 ),
@@ -171,15 +186,15 @@ class _CharadesCalibrationScreenState
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppColors.coralRed.withOpacity(0.5)),
                   ),
-                  child: Column(
-                    children: const [
+                  child: const Column(
+                    children: [
                       Text(
                         'Sensors Unavailable',
                         style: TextStyle(color: AppColors.coralRed, fontWeight: FontWeight.w900, fontSize: 15),
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'No accelerometer detected on this device. You can play using on-screen Tap Buttons!',
+                        'No accelerometer detected on this device. You can play by swiping up/down or tapping the top/bottom of the screen!',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white70, fontSize: 13),
                       ),
@@ -196,9 +211,9 @@ class _CharadesCalibrationScreenState
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
-                    onPressed: () => _launchGame(TiltControlMode.tap),
+                    onPressed: () => _launchGame(TiltControlMode.tilt),
                     child: const Text(
-                      'START IN TAP MODE 👆',
+                      'START GAME 👆',
                       style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1),
                     ),
                   ),
@@ -235,15 +250,6 @@ class _CharadesCalibrationScreenState
                   'Keep still',
                   style: TextStyle(color: Colors.white38, fontSize: 12),
                 ),
-
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => _launchGame(TiltControlMode.tap),
-                  child: const Text(
-                    'Or Play in Tap Mode',
-                    style: TextStyle(color: AppColors.savannaGold, fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                ),
               ],
 
               const SizedBox(height: 16),
@@ -251,6 +257,7 @@ class _CharadesCalibrationScreenState
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

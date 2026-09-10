@@ -18,3 +18,5 @@ final achievementsProvider = FutureProvider<List<Achievement>>((ref) async {
   final repo = ref.watch(statsRepositoryProvider);
   return await repo.getAchievements();
 });
+
+final userAchievementsProvider = achievementsProvider;

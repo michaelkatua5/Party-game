@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_typography.dart';
-import '../../../shared/widgets/friends_illustration.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -20,7 +17,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _navigateToHome() async {
-    await Future.delayed(const Duration(milliseconds: 2400));
+    await Future.delayed(const Duration(milliseconds: 3500));
     if (mounted) {
       context.go('/home');
     }
@@ -30,91 +27,64 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0F0B1E), // Deep party purple-black
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(),
-
-                // Title Branding: CHEZA! with Party Mask Icon
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF8B5CF6),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Text('🎭', style: TextStyle(fontSize: 24)),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'CHEZA!',
-                      style: AppTypography.gameTitle.copyWith(
-                        fontSize: 48,
-                        color: Colors.white,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                  ],
-                ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
-
-                const SizedBox(height: 6),
-
-                Text(
-                  'PLAY. LAUGH. REPEAT.',
-                  style: TextStyle(
-                    color: AppColors.savannaGold,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 3,
-                  ),
-                ).animate().fadeIn(delay: 200.ms),
-
-                const SizedBox(height: 48),
-
-                // 4 Friends Celebrating Illustration
-                const FriendsIllustration(height: 160)
-                    .animate()
-                    .fadeIn(delay: 350.ms)
-                    .slideY(begin: 0.1, end: 0),
-
-                const Spacer(),
-
-                // Loading Bar matching Blueprint Screen 1
-                Column(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/splash_bg.jpg'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const Spacer(),
+              
+              // Loading Bar
+              Padding(
+                padding: const EdgeInsets.only(bottom: 32),
+                child: Column(
                   children: [
                     const Text(
                       'LOADING...',
                       style: TextStyle(
-                        color: Colors.white70,
+                        color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 2,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black,
+                            blurRadius: 4,
+                          )
+                        ],
                       ),
-                    ),
+                    ).animate(onPlay: (controller) => controller.repeat()).shimmer(duration: 1500.ms, color: const Color(0xFF38BDF8).withOpacity(0.5)),
                     const SizedBox(height: 12),
                     SizedBox(
-                      width: 180,
+                      width: 200,
+                      height: 8,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: const LinearProgressIndicator(
-                          minHeight: 8,
-                          backgroundColor: Color(0xFF1F1B33),
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF38BDF8)),
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween<double>(begin: 0.0, end: 1.0),
+                          duration: const Duration(milliseconds: 3000),
+                          curve: Curves.easeInOut,
+                          builder: (context, value, _) {
+                            return LinearProgressIndicator(
+                              value: value,
+                              backgroundColor: Colors.black54,
+                              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF38BDF8)),
+                            );
+                          },
                         ),
                       ),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 32),
-              ],
-            ),
+              ).animate().fadeIn(duration: 800.ms, delay: 300.ms).slideY(begin: 0.2, end: 0, curve: Curves.easeOutCubic),
+            ],
           ),
         ),
       ),

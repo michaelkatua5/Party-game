@@ -69,6 +69,10 @@ class TimerNotifier extends StateNotifier<TimerState> {
     });
   }
 
+  void pause() => pauseTimer();
+
+  void resume() => resumeTimer();
+
   void pauseTimer() {
     if (state.isRunning && !state.isPaused) {
       _timer?.cancel();

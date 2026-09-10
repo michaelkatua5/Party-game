@@ -9,7 +9,6 @@ import '../../../domain/models/game_settings.dart';
 import '../../../domain/models/player.dart';
 import '../../../domain/models/team.dart';
 import '../../../shared/widgets/kenyan_button.dart';
-import '../../../shared/widgets/gradient_card.dart';
 import '../../categories/providers/category_providers.dart';
 import '../../game/providers/game_controller.dart';
 import '../../settings/providers/settings_provider.dart';
@@ -26,7 +25,7 @@ class _CustomGameScreenState extends ConsumerState<CustomGameScreen> {
   int _totalRounds = 3;
   String _difficulty = 'all';
   final List<String> _selectedCategoryIds = [];
-  bool _allowPassing = true;
+  final bool _allowPassing = true;
   int _passPenalty = 0;
   bool _drinkingMode = false;
   bool _familyFriendly = true;

@@ -5,27 +5,24 @@ import 'package:cheza_game/core/l10n/app_localizations.dart';
 import 'package:cheza_game/features/home/presentation/home_screen.dart';
 
 void main() {
-  testWidgets('HomeScreen renders CHARADES and KINGS CUP hero cards and quick actions', (WidgetTester tester) async {
+  testWidgets('HomeScreen renders game selection, Charades and Kings Cup cards', (WidgetTester tester) async {
     await tester.pumpWidget(
-      ProviderScope(
+      const ProviderScope(
         child: MaterialApp(
-          localizationsDelegates: const [
+          localizationsDelegates: [
             AppLocalizations.delegate,
           ],
-          home: const HomeScreen(),
+          home: HomeScreen(),
         ),
       ),
     );
 
-    await tester.pump();
+    // Settle all flutter_animate animations
+    await tester.pumpAndSettle();
 
-    // Verify 2-in-1 Platform Elements matching Blueprint Screen 2
-    expect(find.text('READY TO PLAY?'), findsOneWidget);
+    // Verify Streamlined Game Selection Elements
+    expect(find.text('CHOOSE YOUR GAME'), findsOneWidget);
     expect(find.text('CHARADES'), findsOneWidget);
     expect(find.text('KINGS CUP'), findsOneWidget);
-    expect(find.text('PLAYERS'), findsOneWidget);
-    expect(find.text('CATEGORIES'), findsOneWidget);
-    expect(find.text('ACHIEVEMENTS'), findsOneWidget);
-    expect(find.text('SETTINGS'), findsOneWidget);
   });
 }

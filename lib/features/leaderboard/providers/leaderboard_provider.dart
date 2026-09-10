@@ -6,3 +6,5 @@ final leaderboardProvider = FutureProvider<List<LeaderboardEntry>>((ref) async {
   final repo = ref.watch(leaderboardRepositoryProvider);
   return await repo.getLocalLeaderboard();
 });
+
+final leaderboardEntriesProvider = leaderboardProvider;

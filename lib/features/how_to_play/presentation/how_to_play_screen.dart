@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
-import '../../../shared/widgets/friends_illustration.dart';
+import '../../../core/constants/app_typography.dart';
+import '../../../shared/widgets/cheza_button.dart';
+import '../../../shared/widgets/cheza_card.dart';
 
 class HowToPlayScreen extends StatelessWidget {
   const HowToPlayScreen({super.key});
@@ -12,139 +15,149 @@ class HowToPlayScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
+        title: Text(
           'HOW TO PLAY',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-            fontSize: 18,
-            letterSpacing: 1.2,
-          ),
+          style: AppTypography.h2.copyWith(letterSpacing: 1.2),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingL, vertical: 12),
-        children: [
-          // Step 1: PASS THE PHONE
-          _buildStepCard(
-            stepNumber: '1',
-            title: 'PASS THE PHONE',
-            description: 'Hand the phone to the designated actor on your team.',
-            iconEmoji: '📱',
-            accentColor: AppColors.electricCyan,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingL, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Rule 1: Forehead Position
+              _buildRuleCard(
+                step: '1',
+                title: 'PLACE PHONE ON FOREHEAD',
+                description: 'Hold the phone against your forehead facing your friends. You must not look at the screen!',
+                icon: Icons.phone_android_rounded,
+                accentColor: AppColors.savannaGold,
+              ).animate().fadeIn(delay: 100.ms),
+
+              const SizedBox(height: 14),
+
+              // Rule 2: Act & Guess
+              _buildRuleCard(
+                step: '2',
+                title: 'FRIENDS ACT IT OUT',
+                description: 'Your team acts out the Kenyan slang, food, celebrity or trend. NO speaking the word, humming, or rhyming!',
+                icon: Icons.theater_comedy_rounded,
+                accentColor: AppColors.neonGreen,
+              ).animate().fadeIn(delay: 200.ms),
+
+              const SizedBox(height: 14),
+
+              // Rule 3: Tilt Up for Correct
+              _buildRuleCard(
+                step: '3',
+                title: 'TILT UP = GOT IT (+1 PT)',
+                description: 'When you guess correctly, tilt your forehead upward to score 1 point and load the next card.',
+                icon: Icons.arrow_upward_rounded,
+                accentColor: AppColors.forestEmerald,
+              ).animate().fadeIn(delay: 300.ms),
+
+              const SizedBox(height: 14),
+
+              // Rule 4: Tilt Down to Pass
+              _buildRuleCard(
+                step: '4',
+                title: 'TILT DOWN = PASS (SKIP)',
+                description: 'Stuck? Tilt your head downward to skip the card. Try to score as many points before the 60s timer expires!',
+                icon: Icons.arrow_downward_rounded,
+                accentColor: AppColors.coralRed,
+              ).animate().fadeIn(delay: 400.ms),
+
+              const SizedBox(height: 14),
+
+              // Rule 5: Kings Cup Rules
+              _buildRuleCard(
+                step: '5',
+                title: 'KINGS CUP PARTY RULES',
+                description: 'Draw cards from the 52-card party deck. Follow interactive forfeits, assign mates, and avoid the 4th King!',
+                icon: Icons.workspace_premium_rounded,
+                accentColor: AppColors.cyberPink,
+              ).animate().fadeIn(delay: 500.ms),
+
+              const SizedBox(height: 24),
+
+              ChezaButton(
+                text: 'LET\'S PLAY! 🎭',
+                variant: ChezaButtonVariant.primary,
+                onPressed: () => context.push('/game-modes'),
+              ),
+              const SizedBox(height: 16),
+            ],
           ),
-
-          const SizedBox(height: 12),
-
-          // Step 2: ACT OUT THE WORD
-          _buildStepCard(
-            stepNumber: '2',
-            title: 'ACT OUT THE WORD',
-            description: 'Actor acts out the Kenyan slang, food, or place without speaking, mouthing, or spelling.',
-            iconEmoji: '🎭',
-            accentColor: AppColors.savannaGold,
-          ),
-
-          const SizedBox(height: 12),
-
-          // Step 3: FRIENDS GUESS
-          _buildStepCard(
-            stepNumber: '3',
-            title: 'FRIENDS GUESS',
-            description: 'Teammates shout out guesses before the round countdown timer runs out.',
-            iconEmoji: '🗣️',
-            accentColor: AppColors.sunsetOrange,
-          ),
-
-          const SizedBox(height: 12),
-
-          // Step 4: GET POINTS
-          _buildStepCard(
-            stepNumber: '4',
-            title: 'GET POINTS',
-            description: 'Tap "✓ GOT IT" for +1 point, or "↻ PASS" if too difficult.',
-            iconEmoji: '💯',
-            accentColor: AppColors.neonGreen,
-          ),
-
-          const SizedBox(height: 12),
-
-          // Step 5: WIN!
-          _buildStepCard(
-            stepNumber: '5',
-            title: 'WIN!',
-            description: 'Highest scoring team after all rounds is crowned the champion!',
-            iconEmoji: '👑',
-            accentColor: AppColors.partyPurple,
-          ),
-
-          const SizedBox(height: 24),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildStepCard({
-    required String stepNumber,
+  Widget _buildRuleCard({
+    required String step,
     required String title,
     required String description,
-    required String iconEmoji,
+    required IconData icon,
     required Color accentColor,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.darkCard,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.darkCardBorder),
-      ),
+    return ChezaCard(
+      padding: const EdgeInsets.all(18),
+      borderColor: accentColor.withOpacity(0.35),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 14,
-            backgroundColor: accentColor,
-            child: Text(
-              stepNumber,
-              style: const TextStyle(
-                color: AppColors.textDark,
-                fontWeight: FontWeight.w900,
-                fontSize: 13,
-              ),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.18),
+              shape: BoxShape.circle,
+              border: Border.all(color: accentColor.withOpacity(0.4), width: 1.5),
             ),
+            child: Icon(icon, color: accentColor, size: 22),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: accentColor,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 14,
-                    letterSpacing: 0.5,
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: accentColor.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'STEP $step',
+                        style: TextStyle(color: accentColor, fontSize: 9, fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: AppTypography.h3.copyWith(fontSize: 14, fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   description,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    height: 1.3,
-                  ),
+                  style: AppTypography.bodySmall.copyWith(fontSize: 12, height: 1.3),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Text(iconEmoji, style: const TextStyle(fontSize: 28)),
         ],
       ),
     );

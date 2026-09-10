@@ -22,7 +22,7 @@ class GradientCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget content = Container(
+    final Widget content = Container(
       padding: padding,
       decoration: BoxDecoration(
         color: backgroundColor ?? AppColors.darkCard,

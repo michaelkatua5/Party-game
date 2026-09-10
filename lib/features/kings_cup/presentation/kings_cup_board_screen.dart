@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_dimensions.dart';
-import '../../../domain/models/kings_card.dart';
+import '../../../core/constants/app_typography.dart';
+import '../../../domain/models/kings_cup_session.dart';
 import '../providers/kings_cup_controller.dart';
 import 'kings_cup_reveal_dialog.dart';
-import 'kings_cup_king_rule_dialog.dart';
 
 class KingsCupBoardScreen extends ConsumerWidget {
   const KingsCupBoardScreen({super.key});
@@ -16,20 +16,31 @@ class KingsCupBoardScreen extends ConsumerWidget {
     final session = ref.watch(kingsCupControllerProvider);
     final notifier = ref.read(kingsCupControllerProvider.notifier);
 
+    ref.listen<KingsCupSession?>(kingsCupControllerProvider, (prev, next) {
+      if (next?.isGameOver == true) {
+        context.go('/kings-cup/final-king');
+      }
+    });
+
     if (session == null) {
       return Scaffold(
-        backgroundColor: const Color(0xFF0F0B1E),
+        backgroundColor: const Color(0xFF0D0B1A),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('No active Kings Cup session', style: TextStyle(color: Colors.white)),
+              const Text('Kings Cup session not started', style: TextStyle(color: Colors.white)),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  notifier.startNewGame();
-                },
-                child: const Text('Start Kings Cup'),
+              GestureDetector(
+                onTap: () => context.pop(),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.savannaGold,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Text('GO BACK', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900)),
+                ),
               ),
             ],
           ),
@@ -37,339 +48,495 @@ class KingsCupBoardScreen extends ConsumerWidget {
       );
     }
 
-    final currentPlayer = session.currentPlayer;
+    final activeRules = session.activeRules;
     final kingsDrawn = session.kingsDrawnCount;
 
+    Future<void> onDrawCard() async {
+      final card = notifier.drawCard();
+      if (card != null) {
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => KingsCupRevealDialog(
+            card: card,
+            isFamilyMode: session.isFamilyMode,
+            players: session.players,
+            currentPlayer: session.currentPlayer,
+            onNext: () {
+              Navigator.of(ctx).pop();
+              notifier.nextPlayer();
+            },
+          ),
+        );
+      }
+    }
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0B1E),
+      backgroundColor: const Color(0xFF0D0B1A),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-          onPressed: () => context.go('/home'),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white70, size: 20),
+          onPressed: () => context.pop(),
         ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Text('👑', style: TextStyle(fontSize: 20)),
-            SizedBox(width: 8),
-            Text(
-              'KINGS CUP',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 18,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ],
+        centerTitle: true,
+        title: Text(
+          'KINGS CUP 👑',
+          style: AppTypography.h2.copyWith(
+            color: AppColors.savannaGold,
+            letterSpacing: 2,
+            fontWeight: FontWeight.w900,
+            fontSize: 20,
+          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.close, color: Colors.white70),
-            onPressed: () => context.go('/home'),
+            icon: const Icon(Icons.settings_outlined, color: Colors.white54, size: 22),
+            tooltip: 'Reset Deck',
+            onPressed: () => notifier.startNewGame(),
           ),
         ],
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingL, vertical: 12),
-          child: Column(
-            children: [
-              // Top Stats Row: CARDS REMAINING & KINGS COUNTER matching Blueprint Screen 11 & 14
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'CARDS REMAINING',
-                        style: TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        '${session.cardsRemaining}',
-                        style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900),
-                      ),
-                    ],
-                  ),
-
-                  // Kings Counter e.g. 2/4 with crowns
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text(
-                        'KINGS',
-                        style: TextStyle(color: AppColors.savannaGold, fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        '$kingsDrawn / 4',
-                        style: const TextStyle(color: AppColors.savannaGold, fontSize: 26, fontWeight: FontWeight.w900),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: List.generate(4, (index) {
-                          final isDrawn = index < kingsDrawn;
-                          return Padding(
-                            padding: const EdgeInsets.only(left: 3),
-                            child: Text(
-                              isDrawn ? '👑' : '⚪',
-                              style: TextStyle(fontSize: isDrawn ? 16 : 10),
-                            ),
-                          );
-                        }),
-                      ),
-                    ],
-                  ),
-                ],
+      body: Stack(
+        children: [
+          // Background — dark purple with suit symbols pattern
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: _CardSuitPatternPainter(),
               ),
+            ),
+          ),
 
-              const Spacer(flex: 1),
+          SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
 
-              // Royal Deck Center Stack with 3D layers
-              GestureDetector(
-                onTap: () => _handleDrawCard(context, ref),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Layer 3 (Background depth)
-                    Container(
-                      width: 170,
-                      height: 230,
-                      transform: Matrix4.translationValues(8, 8, 0),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E1736),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFF3B2F63)),
-                      ),
+                // ── Stats bar ──────────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.35),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppColors.savannaGold.withOpacity(0.35), width: 1),
                     ),
-                    // Layer 2 (Middle depth)
-                    Container(
-                      width: 170,
-                      height: 230,
-                      transform: Matrix4.translationValues(4, 4, 0),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF261947),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFF4C3682)),
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Row(
+                          children: [
+                            const Text('👑', style: TextStyle(fontSize: 16)),
+                            const SizedBox(width: 6),
+                            Text(
+                              '$kingsDrawn / 4 Kings',
+                              style: const TextStyle(
+                                color: AppColors.savannaGold,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          width: 1,
+                          height: 20,
+                          color: AppColors.savannaGold.withOpacity(0.3),
+                        ),
+                        Row(
+                          children: [
+                            const Text('🃏', style: TextStyle(fontSize: 16)),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${session.cardsRemaining} Cards Left',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    // Top Deck Card
-                    Container(
-                      width: 170,
-                      height: 230,
+                  ),
+                ),
+
+                // ── Active rules shelf ─────────────────────────────────────
+                if (activeRules.isNotEmpty)
+                  Container(
+                    height: 44,
+                    margin: const EdgeInsets.only(top: 10, left: 16, right: 16),
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: activeRules.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (ctx, i) {
+                        final rule = activeRules[i];
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.partyPurple.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.partyPurple.withOpacity(0.4)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Text('📜 ', style: TextStyle(fontSize: 11)),
+                              Text(rule, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                              const SizedBox(width: 6),
+                              GestureDetector(
+                                onTap: () => notifier.removeActiveRule(rule),
+                                child: const Icon(Icons.close, color: Colors.white54, size: 13),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                const Spacer(),
+
+                // ── Ornate card ────────────────────────────────────────────
+                GestureDetector(
+                  onTap: onDrawCard,
+                  child: _OrnateKingsCupCard(),
+                ),
+
+                const SizedBox(height: 32),
+
+                // ── Player turn callout ────────────────────────────────────
+                Text(
+                  '✦  ${session.currentTurnPlayerName}, your turn to Cheza!  ✦',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.savannaGold,
+                    fontSize: 18,
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                    shadows: [
+                      Shadow(
+                        color: AppColors.savannaGold.withOpacity(0.4),
+                        blurRadius: 12,
+                      ),
+                    ],
+                  ),
+                ).animate(onPlay: (c) => c.repeat(reverse: true))
+                  .fadeIn(duration: 600.ms)
+                  .then()
+                  .custom(
+                    duration: 1800.ms,
+                    curve: Curves.easeInOut,
+                    builder: (ctx, value, child) => Opacity(opacity: 0.65 + 0.35 * value, child: child),
+                  ),
+
+                const Spacer(),
+
+                // ── Draw button ────────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  child: GestureDetector(
+                    onTap: onDrawCard,
+                    child: Container(
+                      height: 60,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF3B1E78),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: AppColors.savannaGold, width: 2),
+                        color: AppColors.savannaGold,
+                        borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF8B5CF6).withOpacity(0.4),
-                            blurRadius: 24,
-                            offset: const Offset(0, 10),
+                            color: AppColors.savannaGold.withOpacity(0.5),
+                            blurRadius: 20,
+                            spreadRadius: 1,
                           ),
                         ],
                       ),
-                      alignment: Alignment.center,
-                      child: Column(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Text('👑', style: TextStyle(fontSize: 48)),
-                          SizedBox(height: 8),
+                        children: [
+                          Icon(Icons.back_hand_outlined, color: Colors.black, size: 22),
+                          SizedBox(width: 10),
                           Text(
-                            'TAP TO\nDRAW',
-                            textAlign: TextAlign.center,
+                            'DRAW CARD  🃏',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Colors.black,
                               fontWeight: FontWeight.w900,
-                              fontSize: 14,
+                              fontSize: 17,
                               letterSpacing: 1.5,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Ornate KC card widget
+// ─────────────────────────────────────────────────────────────────────────────
+class _OrnateKingsCupCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 240,
+      height: 340,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF1A1433),
+            Color(0xFF0D0B1A),
+            Color(0xFF1A1433),
+          ],
+        ),
+        border: Border.all(color: AppColors.savannaGold, width: 2.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.savannaGold.withOpacity(0.55),
+            blurRadius: 40,
+            spreadRadius: 4,
+          ),
+          BoxShadow(
+            color: AppColors.savannaGold.withOpacity(0.2),
+            blurRadius: 80,
+            spreadRadius: 10,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.8),
+            blurRadius: 20,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            // Decorative diamond grid pattern
+            Positioned.fill(
+              child: CustomPaint(painter: _CardPatternPainter()),
+            ),
+
+            // Inner gold border
+            Positioned.fill(
+              child: Container(
+                margin: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.savannaGold.withOpacity(0.6), width: 1.5),
                 ),
               ),
+            ),
 
-              const Spacer(flex: 1),
+            // Corner suit symbols
+            _buildCornerSuit(Alignment.topLeft, '♠'),
+            _buildCornerSuit(Alignment.topRight, '♥'),
+            _buildCornerSuit(Alignment.bottomLeft, '♦'),
+            _buildCornerSuit(Alignment.bottomRight, '♣'),
 
-              // CURRENT PLAYER Indicator
-              Column(
+            // Center crest
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'CURRENT PLAYER',
-                    style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1),
-                  ),
-                  const SizedBox(height: 4),
+                  // Crown
                   Text(
-                    currentPlayer.name.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1,
+                    '♛',
+                    style: TextStyle(
+                      color: AppColors.savannaGold,
+                      fontSize: 38,
+                      shadows: [
+                        Shadow(color: AppColors.savannaGold.withOpacity(0.8), blurRadius: 16),
+                      ],
                     ),
+                  )
+                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .scaleXY(end: 1.06, duration: 1400.ms, curve: Curves.easeInOut),
+                  const SizedBox(height: 6),
+                  // KC shield
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.savannaGold, width: 2),
+                      gradient: RadialGradient(
+                        colors: [
+                          AppColors.savannaGold.withOpacity(0.2),
+                          Colors.transparent,
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.savannaGold.withOpacity(0.3),
+                          blurRadius: 16,
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: RichText(
+                        textAlign: TextAlign.center,
+                        text: const TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'K',
+                              style: TextStyle(
+                                color: AppColors.savannaGold,
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -2,
+                                shadows: [Shadow(color: AppColors.savannaGold, blurRadius: 8)],
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'C',
+                              style: TextStyle(
+                                color: AppColors.savannaGold,
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                                shadows: [Shadow(color: AppColors.savannaGold, blurRadius: 8)],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Decorative divider
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(width: 30, height: 1, color: AppColors.savannaGold.withOpacity(0.6)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Text('♦', style: TextStyle(color: AppColors.savannaGold.withOpacity(0.8), fontSize: 10)),
+                      ),
+                      Container(width: 30, height: 1, color: AppColors.savannaGold.withOpacity(0.6)),
+                    ],
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    )
+      .animate(onPlay: (c) => c.repeat(reverse: true))
+      .custom(
+        duration: 2000.ms,
+        curve: Curves.easeInOut,
+        builder: (ctx, value, child) {
+          // Breathing glow intensity
+          return child;
+        },
+      );
+  }
 
-              const SizedBox(height: 16),
-
-              // DRAW CARD Button matching Blueprint
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.savannaGold,
-                    foregroundColor: AppColors.textDark,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  onPressed: () => _handleDrawCard(context, ref),
-                  child: const Text(
-                    'DRAW CARD',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // ACTIVE RULES Section with dynamic deletion
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1530),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFF2E2452)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'ACTIVE RULES',
-                          style: TextStyle(
-                            color: AppColors.savannaGold,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        if (session.activeRules.isNotEmpty)
-                          Text(
-                            '${session.activeRules.length} Active',
-                            style: const TextStyle(color: Colors.white38, fontSize: 10),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    if (session.activeRules.isEmpty)
-                      const Text(
-                        'No custom rules active yet. Draw a King to make a rule!',
-                        style: TextStyle(color: Colors.white38, fontSize: 12, fontStyle: FontStyle.italic),
-                      )
-                    else
-                      ...List.generate(session.activeRules.length, (i) {
-                        final rule = session.activeRules[i];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Row(
-                            children: [
-                              const Text('⚠️', style: TextStyle(fontSize: 12)),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  rule,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                constraints: const BoxConstraints(),
-                                padding: const EdgeInsets.all(4),
-                                icon: const Icon(Icons.close, color: Colors.white38, size: 16),
-                                onPressed: () {
-                                  notifier.removeCustomRule(i);
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
+  Widget _buildCornerSuit(Alignment alignment, String suit) {
+    final isRed = suit == '♥' || suit == '♦';
+    return Positioned.fill(
+      child: Align(
+        alignment: alignment,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Text(
+            suit,
+            style: TextStyle(
+              color: isRed
+                  ? AppColors.savannaGold.withOpacity(0.5)
+                  : AppColors.savannaGold.withOpacity(0.5),
+              fontSize: 16,
+            ),
           ),
         ),
       ),
     );
   }
+}
 
-  void _handleDrawCard(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(kingsCupControllerProvider.notifier);
-    final card = notifier.drawCard();
-    if (card == null) return;
+// ─────────────────────────────────────────────────────────────────────────────
+// Background pattern painter — lightweight diamond grid (no TextPainter)
+// ─────────────────────────────────────────────────────────────────────────────
+class _CardSuitPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Background gradient
+    final bgPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF16103A), Color(0xFF0D0B1A)],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
 
-    final session = ref.read(kingsCupControllerProvider);
-    if (session == null) return;
+    // Subtle diamond grid
+    final paint = Paint()
+      ..color = const Color(0x0FC8A951)
+      ..style = PaintingStyle.fill;
 
-    // If 4th King drawn -> Transition to Final King Finale Screen
-    if (session.isGameOver) {
-      context.push('/kings-cup/final-king');
-      return;
+    const spacing = 48.0;
+    const half = spacing / 4;
+    final gridPath = Path();
+
+    for (double y = 0; y < size.height + spacing; y += spacing) {
+      for (double x = 0; x < size.width + spacing; x += spacing) {
+        final cx = x + (((y / spacing).floor() % 2) == 0 ? 0 : spacing / 2);
+        gridPath.moveTo(cx, y - half);
+        gridPath.lineTo(cx + half, y);
+        gridPath.lineTo(cx, y + half);
+        gridPath.lineTo(cx - half, y);
+        gridPath.close();
+      }
     }
-
-    // If King drawn -> Open Card Reveal then Rule Creator
-    if (card.isKing) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => KingsCupRevealDialog(
-          card: card,
-          isFamilyMode: session.isFamilyMode,
-          players: session.players,
-          currentPlayer: session.currentPlayer,
-          onNext: () {
-            Navigator.of(context).pop();
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (_) => KingsCupKingRuleDialog(
-                onRuleAdded: (rule) {
-                  notifier.addCustomRule(rule);
-                  notifier.nextPlayer();
-                },
-              ),
-            );
-          },
-        ),
-      );
-    } else {
-      // Normal interactive card reveal dialog
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => KingsCupRevealDialog(
-          card: card,
-          isFamilyMode: session.isFamilyMode,
-          players: session.players,
-          currentPlayer: session.currentPlayer,
-          onNext: () {
-            Navigator.of(context).pop();
-            notifier.nextPlayer();
-          },
-        ),
-      );
-    }
+    canvas.drawPath(gridPath, paint);
   }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Card ornate diamond pattern painter
+// ─────────────────────────────────────────────────────────────────────────────
+class _CardPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColors.savannaGold.withOpacity(0.07)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8;
+
+    const step = 22.0;
+    final gridPath = Path();
+    for (double y = 0; y < size.height; y += step) {
+      for (double x = 0; x < size.width; x += step) {
+        const half = step / 2;
+        gridPath.moveTo(x + half, y);
+        gridPath.lineTo(x + step, y + half);
+        gridPath.lineTo(x + half, y + step);
+        gridPath.lineTo(x, y + half);
+        gridPath.close();
+      }
+    }
+    canvas.drawPath(gridPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

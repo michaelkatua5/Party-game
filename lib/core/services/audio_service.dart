@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 enum GameSound {
   buttonTap,
@@ -10,6 +11,7 @@ enum GameSound {
   timeWarning,
   timeUp,
   victoryFanfare,
+  buzzer,
 }
 
 abstract class AudioService {
@@ -25,6 +27,20 @@ class SystemAudioService implements AudioService {
     _enabled = enabled;
   }
 
+  Future<void> _playAsset(String path, {Duration? durationLimit}) async {
+    final player = AudioPlayer();
+    await player.play(AssetSource(path));
+    
+    if (durationLimit != null) {
+      Future.delayed(durationLimit, () async {
+        await player.stop();
+        player.dispose();
+      });
+    } else {
+      player.onPlayerComplete.listen((_) => player.dispose());
+    }
+  }
+
   @override
   Future<void> play(GameSound sound) async {
     if (!_enabled) return;
@@ -35,9 +51,16 @@ class SystemAudioService implements AudioService {
         case GameSound.countdownTick:
           await SystemSound.play(SystemSoundType.click);
           break;
-        case GameSound.countdownGo:
         case GameSound.correct:
+          await _playAsset('audio/correct.wav');
+          break;
         case GameSound.pass:
+          await _playAsset('audio/pass.wav');
+          break;
+        case GameSound.buzzer:
+          await _playAsset('audio/buzzer.wav', durationLimit: const Duration(milliseconds: 1200));
+          break;
+        case GameSound.countdownGo:
         case GameSound.wrong:
         case GameSound.timeWarning:
         case GameSound.timeUp:

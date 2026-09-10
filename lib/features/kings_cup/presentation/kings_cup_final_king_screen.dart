@@ -29,7 +29,7 @@ class KingsCupFinalKingScreen extends ConsumerWidget {
                 const Spacer(),
 
                 // Title: THE FINAL KING!
-                Text(
+                const Text(
                   '👑 THE FINAL KING! 👑',
                   style: TextStyle(
                     color: AppColors.savannaGold,

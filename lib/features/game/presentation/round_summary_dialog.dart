@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_typography.dart';
+import '../../../core/providers/core_providers.dart';
+import '../../../core/services/haptic_service.dart';
 import '../../../domain/models/game_session.dart';
-import '../../../shared/widgets/kenyan_button.dart';
-import '../providers/game_controller.dart';
+import '../../../shared/widgets/cheza_button.dart';
 
 class RoundSummaryDialog extends ConsumerWidget {
   final GameSession session;
@@ -14,208 +16,162 @@ class RoundSummaryDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final winning = session.winningTeam;
-    final maxScore = session.teams.fold<int>(
-      1,
-      (max, t) => t.score > max ? t.score : max,
-    );
+    final teams = session.teams;
+    final currentTeam = session.currentTeam;
+    final isGameOver = session.status == GameStatus.completed;
 
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
-      appBar: AppBar(
-        title: const Text(
-          'SCOREBOARD',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-            fontSize: 18,
-            letterSpacing: 1.2,
-          ),
-        ),
-      ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingL),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Round Pill
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.neonGreen.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.neonGreen),
-                ),
-                child: Text(
-                  'ROUND ${session.currentRound}',
-                  style: const TextStyle(
-                    color: AppColors.neonGreen,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                    letterSpacing: 1,
+              // 1. Time's Up Header
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.savannaGold.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.savannaGold.withOpacity(0.4)),
                   ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('⏰ ', style: TextStyle(fontSize: 18)),
+                      Text(
+                        'TIME\'S UP! • ROUND ${session.currentRound}',
+                        style: AppTypography.badge.copyWith(color: AppColors.savannaGold, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              ).animate().fadeIn().scale(duration: 300.ms),
+
+              const SizedBox(height: 18),
+
+              Text(
+                'ROUND SUMMARY',
+                textAlign: TextAlign.center,
+                style: AppTypography.displayMedium.copyWith(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.5,
+                  color: Colors.white,
                 ),
               ),
 
               const SizedBox(height: 24),
 
-              // Team Score Progress Bars matching Blueprint
-              ...session.teams.map((team) {
-                final isLeader = winning != null && team.id == winning.id;
-                final progress = maxScore > 0 ? (team.score / maxScore).clamp(0.1, 1.0) : 0.1;
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.darkCard,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isLeader ? AppColors.neonGreen : AppColors.darkCardBorder,
-                        width: isLeader ? 1.5 : 1,
+              // 2. Turn Recap Card
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.darkCard,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: AppColors.darkCardBorder),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      currentTeam.name.toUpperCase(),
+                      style: const TextStyle(
+                        color: AppColors.savannaGold,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                        letterSpacing: 0.8,
                       ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              team.name.toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            Text(
-                              '${team.score}',
-                              style: TextStyle(
-                                color: isLeader ? AppColors.neonGreen : Colors.white,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 18,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: LinearProgressIndicator(
-                            value: progress,
-                            minHeight: 8,
-                            backgroundColor: AppColors.darkInput,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              isLeader ? AppColors.neonGreen : AppColors.sunsetOrange,
+                    const SizedBox(height: 8),
+                    Text(
+                      '+${currentTeam.correctCount} CORRECT',
+                      style: const TextStyle(
+                        color: AppColors.neonGreen,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 32,
+                      ),
+                    ),
+                    Text(
+                      '${currentTeam.passCount} passed',
+                      style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ).animate().scale(duration: 350.ms, curve: Curves.easeOutBack),
+
+              const SizedBox(height: 18),
+
+              // 3. Teams Total Scores Overview
+              ...teams.map((t) {
+                final isCurrent = t.id == currentTeam.id;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isCurrent ? const Color(0xFF1E2638) : AppColors.darkCard,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isCurrent ? AppColors.savannaGold.withOpacity(0.5) : AppColors.darkCardBorder,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Text(isCurrent ? '👉 ' : '🦁 '),
+                          Text(
+                            t.name,
+                            style: TextStyle(
+                              color: isCurrent ? Colors.white : Colors.white70,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
                             ),
                           ),
+                        ],
+                      ),
+                      Text(
+                        '${t.score} PTS',
+                        style: TextStyle(
+                          color: isCurrent ? AppColors.savannaGold : Colors.white60,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 );
               }),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 24),
 
-              // Leading Banner
-              if (winning != null)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: AppColors.savannaGold,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '${winning.name.toUpperCase()} Leading! 🔥',
-                    style: const TextStyle(
-                      color: AppColors.textDark,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 15,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+              // 4. Primary CTA: Route directly to next team's category selection OR results
+              if (isGameOver)
+                ChezaButton(
+                  text: 'SEE FINAL RESULTS 🏆',
+                  variant: ChezaButtonVariant.primary,
+                  onPressed: () {
+                    ref.read(hapticServiceProvider).trigger(HapticType.success);
+                    context.go('/results');
+                  },
+                )
+              else
+                ChezaButton(
+                  text: 'NEXT: ${session.nextTeam.name.toUpperCase()} → PICK VIBE',
+                  variant: ChezaButtonVariant.primary,
+                  onPressed: () {
+                    ref.read(hapticServiceProvider).trigger(HapticType.medium);
+                    // Route directly to Category Selection for next team!
+                    context.go('/category-select');
+                  },
                 ),
-
-              const SizedBox(height: 28),
-
-              // Badges Earned Shelf
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'ROUND BADGES',
-                  style: TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: const [
-                  _RoundBadge(title: 'First Win', emoji: '🏆', color: AppColors.savannaGold),
-                  _RoundBadge(title: '10 Correct', emoji: '🎯', color: AppColors.neonGreen),
-                  _RoundBadge(title: 'Speed Demon', emoji: '⚡', color: AppColors.partyPurple),
-                ],
-              ),
-
-              const Spacer(),
-
-              // Next Round Action Button
-              KenyanButton(
-                text: 'START NEXT ROUND 🚀',
-                gradient: AppColors.primaryGradient,
-                height: 56,
-                onPressed: () {
-                  ref.read(gameControllerProvider.notifier).proceedToNextTurn();
-                },
-              ),
-              const SizedBox(height: 12),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-class _RoundBadge extends StatelessWidget {
-  final String title;
-  final String emoji;
-  final Color color;
-
-  const _RoundBadge({required this.title, required this.emoji, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            shape: BoxShape.circle,
-            border: Border.all(color: color, width: 2),
-          ),
-          alignment: Alignment.center,
-          child: Text(emoji, style: const TextStyle(fontSize: 24)),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          title,
-          style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold),
-        ),
-      ],
     );
   }
 }

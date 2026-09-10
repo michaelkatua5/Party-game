@@ -40,6 +40,8 @@ class KingsCupSession {
   Player get currentPlayer =>
       players.isNotEmpty ? players[currentPlayerIndex % players.length] : const Player(id: 'p1', name: 'Player 1');
 
+  String get currentTurnPlayerName => currentPlayer.name;
+
   KingsCupSession copyWith({
     List<KingsCard>? deck,
     List<KingsCard>? drawnStack,

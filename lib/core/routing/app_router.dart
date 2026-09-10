@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../features/home/presentation/splash_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/game_setup/presentation/game_mode_selection_screen.dart';
 import '../../features/game_setup/presentation/player_setup_screen.dart';
@@ -10,21 +9,21 @@ import '../../features/game/presentation/charades_calibration_screen.dart';
 import '../../features/game/presentation/game_screen.dart';
 import '../../features/kings_cup/presentation/kings_cup_board_screen.dart';
 import '../../features/kings_cup/presentation/kings_cup_final_king_screen.dart';
+import '../../features/kings_cup/presentation/kings_cup_setup_screen.dart';
+import '../../features/do_or_drink/presentation/do_or_drink_board_screen.dart';
+import '../../features/do_or_drink/presentation/do_or_drink_setup_screen.dart';
 import '../../features/results/presentation/results_screen.dart';
 import '../../features/leaderboard/presentation/leaderboard_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/practice/presentation/practice_screen.dart';
 import '../../features/how_to_play/presentation/how_to_play_screen.dart';
+import '../../features/admin/presentation/admin_dashboard_screen.dart';
+import '../../features/tap_roulette/presentation/tap_roulette_screen.dart';
 
 final GoRouter appRouter = GoRouter(
-  initialLocation: '/splash',
+  initialLocation: '/home',
   routes: [
-    GoRoute(
-      path: '/splash',
-      name: 'splash',
-      pageBuilder: (context, state) => const MaterialPage(child: SplashScreen()),
-    ),
     GoRoute(
       path: '/',
       redirect: (_, __) => '/home',
@@ -47,7 +46,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/player-setup',
       name: 'player_setup',
-      pageBuilder: (context, state) => const MaterialPage(child: PlayerSetupScreen()),
+      pageBuilder: (context, state) {
+        final targetRoute = state.extra as String?;
+        return MaterialPage(child: PlayerSetupScreen(targetRoute: targetRoute));
+      },
     ),
     GoRoute(
       path: '/charades-calibration',
@@ -75,6 +77,11 @@ final GoRouter appRouter = GoRouter(
       pageBuilder: (context, state) => const MaterialPage(child: GameScreen()),
     ),
     GoRoute(
+      path: '/kings-cup/setup',
+      name: 'kings_cup_setup',
+      pageBuilder: (context, state) => const MaterialPage(child: KingsCupSetupScreen()),
+    ),
+    GoRoute(
       path: '/kings-cup',
       name: 'kings_cup',
       pageBuilder: (context, state) => const MaterialPage(child: KingsCupBoardScreen()),
@@ -83,6 +90,16 @@ final GoRouter appRouter = GoRouter(
       path: '/kings-cup/final-king',
       name: 'kings_cup_final_king',
       pageBuilder: (context, state) => const MaterialPage(child: KingsCupFinalKingScreen()),
+    ),
+    GoRoute(
+      path: '/do-or-drink/setup',
+      name: 'do_or_drink_setup',
+      pageBuilder: (context, state) => const MaterialPage(child: DoOrDrinkSetupScreen()),
+    ),
+    GoRoute(
+      path: '/do-or-drink',
+      name: 'do_or_drink',
+      pageBuilder: (context, state) => const MaterialPage(child: DoOrDrinkBoardScreen()),
     ),
     GoRoute(
       path: '/results',
@@ -110,9 +127,19 @@ final GoRouter appRouter = GoRouter(
       pageBuilder: (context, state) => const MaterialPage(child: PracticeScreen()),
     ),
     GoRoute(
+      path: '/tap-roulette',
+      name: 'tap-roulette',
+      pageBuilder: (context, state) => const MaterialPage(child: TapRouletteScreen()),
+    ),
+    GoRoute(
       path: '/how-to-play',
       name: 'how_to_play',
       pageBuilder: (context, state) => const MaterialPage(child: HowToPlayScreen()),
+    ),
+    GoRoute(
+      path: '/admin',
+      name: 'admin',
+      pageBuilder: (context, state) => const MaterialPage(child: AdminDashboardScreen()),
     ),
   ],
 );

@@ -34,6 +34,12 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<void> updateUserProfile(UserProfile profile) async {
+    await storage.setString(_keyUserNickname, profile.displayName);
+    _controller.add(profile);
+  }
+
+  @override
   Future<void> signOut() async {
     await storage.remove(_keyUserNickname);
     _controller.add(null);
